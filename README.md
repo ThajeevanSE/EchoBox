@@ -144,5 +144,5 @@ BSc (Hons) Information Technology
 
 University of Moratuwa
 
-## 📄 License
+📄 License
 This project is developed for academic purposes only.
