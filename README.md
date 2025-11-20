@@ -114,21 +114,21 @@ EchoBox/ │ ├── assets/ │ ├── src/ │ ├── components/ │ 
 ```bash
 git clone [https://github.com/yourusername/EchoBox.git](https://github.com/yourusername/EchoBox.git)
 cd EchoBox
-## 2️⃣ Install Dependencies
+2️⃣ Install Dependencies
 Bash
 
 npm install
-## 3️⃣ Start App
+3️⃣ Start App
 Bash
 
 npx expo start
 
-## 📘 How It Works
+📘 How It Works
 Login → Home → View Entertainment Items → Details → Add to Favourites → View Favourites
 
 The app maintains global state (auth, favourites) using Redux Toolkit and persists locally for a smooth user experience.
 
-## 🏗️ Future Enhancements
+🏗️ Future Enhancements
 Offline support
 
 Push notifications
@@ -137,7 +137,7 @@ User playlists
 
 Multi-language support
 
-## 👨‍💻 Developer
+👨‍💻 Developer
 Vasanthakumar Thajeevan
 
 BSc (Hons) Information Technology
