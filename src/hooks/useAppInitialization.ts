@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { hydrateAuth } from '../store/slices/authSlice';
+import { hydrateTheme } from '../store/slices/darkModeSlice';
 import { hydrateFavourites } from '../store/slices/favouritesSlice';
 import { useAppDispatch } from './useRedux';
 
@@ -9,7 +10,11 @@ export const useAppInitialization = () => {
 
   useEffect(() => {
     const bootstrap = async () => {
-      await Promise.all([dispatch(hydrateAuth()), dispatch(hydrateFavourites())]);
+      await Promise.all([
+        dispatch(hydrateAuth()),
+        dispatch(hydrateFavourites()),
+        dispatch(hydrateTheme())
+      ]);
       setReady(true);
     };
 

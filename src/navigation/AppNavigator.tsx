@@ -1,17 +1,17 @@
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
-import { HomeScreen } from '../screens/HomeScreen';
-import { SongsScreen } from '../screens/SongsScreen';
-import { PodcastsScreen } from '../screens/PodcastsScreen';
-import { FavouritesScreen } from '../screens/FavouritesScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
-import { LoginScreen } from '../screens/LoginScreen';
-import { RegisterScreen } from '../screens/RegisterScreen';
-import { DetailsScreen } from '../screens/DetailsScreen';
-import { lightTheme } from '../constants/theme';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { getTheme } from '../constants/theme';
 import { useAppSelector } from '../hooks/useRedux';
+import { DetailsScreen } from '../screens/DetailsScreen';
+import { FavouritesScreen } from '../screens/FavouritesScreen';
+import { HomeScreen } from '../screens/HomeScreen';
+import { LoginScreen } from '../screens/LoginScreen';
+import { PodcastsScreen } from '../screens/PodcastsScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+import { RegisterScreen } from '../screens/RegisterScreen';
+import { SongsScreen } from '../screens/SongsScreen';
 import type {
   AuthStackParamList,
   MainStackParamList,
@@ -24,17 +24,7 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-const navTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: lightTheme.background,
-    card: lightTheme.card,
-    text: lightTheme.text,
-    primary: lightTheme.accent,
-    border: lightTheme.border
-  }
-};
+// navTheme will be computed inside component using the current theme mode
 
 const AuthStackNavigator = () => (
   <AuthStack.Navigator screenOptions={{ headerShadowVisible: false }}>
@@ -53,34 +43,39 @@ const tabIcons: Record<keyof TabParamList, FeatherIconName> = {
   Profile: 'user'
 };
 
-const TabNavigator = () => (
-  <Tab.Navigator
-    screenOptions={({ route }) => ({
-      headerShown: false,
-      tabBarShowLabel: true,
-      tabBarActiveTintColor: lightTheme.accent,
-      tabBarInactiveTintColor: lightTheme.secondaryText,
-      tabBarStyle: {
-        backgroundColor: lightTheme.card,
-        borderTopColor: lightTheme.border,
-        height: 64,
-        paddingBottom: 10,
-        paddingTop: 6
-      },
-      tabBarIcon: ({ color, size }) => {
-        const iconName =
-          tabIcons[route.name as keyof TabParamList] ?? ('circle' as FeatherIconName);
-        return <Feather name={iconName} size={size} color={color} />;
-      }
-    })}
-  >
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Songs" component={SongsScreen} />
-    <Tab.Screen name="Podcasts" component={PodcastsScreen} />
-    <Tab.Screen name="Favourites" component={FavouritesScreen} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
-  </Tab.Navigator>
-);
+const TabNavigator = () => {
+  const themeMode = useAppSelector((state: any) => state.darkMode?.mode ?? 'light');
+  const theme = getTheme(themeMode);
+
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: theme.accent,
+        tabBarInactiveTintColor: theme.secondaryText,
+        tabBarStyle: {
+          backgroundColor: theme.card,
+          borderTopColor: theme.border,
+          height: 64,
+          paddingBottom: 10,
+          paddingTop: 6
+        },
+        tabBarIcon: ({ color, size }) => {
+          const iconName =
+            tabIcons[route.name as keyof TabParamList] ?? ('circle' as FeatherIconName);
+          return <Feather name={iconName} size={size} color={color} />;
+        }
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Songs" component={SongsScreen} />
+      <Tab.Screen name="Podcasts" component={PodcastsScreen} />
+      <Tab.Screen name="Favourites" component={FavouritesScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+};
 
 const MainStackNavigator = () => (
   <MainStack.Navigator>
@@ -95,6 +90,19 @@ const MainStackNavigator = () => (
 
 export const AppNavigator = () => {
   const isLoggedIn = useAppSelector(state => state.auth.isLoggedIn);
+  const themeMode = useAppSelector((state: any) => state.darkMode?.mode ?? 'light');
+  const theme = getTheme(themeMode);
+  const navTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: theme.background,
+      card: theme.card,
+      text: theme.text,
+      primary: theme.accent,
+      border: theme.border
+    }
+  };
 
   return (
     <NavigationContainer theme={navTheme}>
