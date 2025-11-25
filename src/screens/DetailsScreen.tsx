@@ -7,10 +7,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Dimensions
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { fetchMovieDetailsFromApi } from '../services/movies';
 import type { MainStackParamList } from '../navigation/types';
 import { lightTheme } from '../constants/theme';
@@ -20,6 +23,8 @@ import { addToFavourites, removeFromFavourites } from '../store/slices/favourite
 import type { MovieDetails } from '../types/movie';
 
 type RouteProps = RouteProp<MainStackParamList, 'Details'>;
+
+const { width } = Dimensions.get('window');
 
 export const DetailsScreen = () => {
   const route = useRoute<RouteProps>();
@@ -64,6 +69,7 @@ export const DetailsScreen = () => {
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.loader}>
           <ActivityIndicator size="large" color={lightTheme.accent} />
+          <Text style={styles.loadingText}>Loading movie details...</Text>
         </View>
       </SafeAreaView>
     );
@@ -73,6 +79,7 @@ export const DetailsScreen = () => {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.loader}>
+          <Feather name="alert-circle" size={48} color="#ef4444" />
           <Text style={styles.errorText}>{error ?? 'Movie not found'}</Text>
         </View>
       </SafeAreaView>
@@ -82,44 +89,119 @@ export const DetailsScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <Image source={{ uri: getPosterUrl(movie.poster_path) }} style={styles.poster} />
-      <View style={styles.content}>
-        <Text style={styles.title}>{movie.title}</Text>
-        <Text style={styles.subtitle}>{movie.tagline}</Text>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>Release: {movie.release_date ?? 'N/A'}</Text>
-          <Text style={styles.metaText}>Rating: ⭐ {movie.vote_average?.toFixed(1) ?? 'NR'}</Text>
-        </View>
-        <Text style={styles.sectionTitle}>Overview</Text>
-        <Text style={styles.overview}>{movie.overview}</Text>
-
-        {movie.genres && movie.genres.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Genres</Text>
-            <View style={styles.genres}>
-              {movie.genres.map(genre => (
-                <View key={genre.id} style={styles.genrePill}>
-                  <Text style={styles.genreText}>{genre.name}</Text>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-
-        <TouchableOpacity
-          style={[styles.favButton, isFavourite && styles.favButtonActive]}
-          onPress={handleFavouriteToggle}
-        >
-          <Feather
-            name={isFavourite ? 'check' : 'heart'}
-            color={isFavourite ? '#fff' : lightTheme.accent}
-            size={18}
+        {/* Hero Section with Poster */}
+        <View style={styles.heroContainer}>
+          <Image 
+            source={{ uri: getPosterUrl(movie.poster_path) }} 
+            style={styles.poster}
+            resizeMode="cover"
           />
-          <Text style={[styles.favButtonText, isFavourite && styles.favButtonTextActive]}>
-            {isFavourite ? 'Added to favourites' : 'Add to favourites'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}
+            style={styles.gradient}
+          />
+          
+          {/* Floating Favourite Button */}
+          <TouchableOpacity
+            style={styles.floatingFavButton}
+            onPress={handleFavouriteToggle}
+          >
+            <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
+              <Feather
+                name={isFavourite ? 'heart' : 'heart'}
+                color={isFavourite ? '#ff006e' : '#fff'}
+                size={24}
+                fill={isFavourite ? '#ff006e' : 'transparent'}
+              />
+            </BlurView>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.content}>
+          {/* Title Section */}
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>{movie.title}</Text>
+            {movie.tagline && (
+              <Text style={styles.subtitle}>"{movie.tagline}"</Text>
+            )}
+          </View>
+
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Feather name="calendar" size={16} color={lightTheme.accent} />
+              <Text style={styles.statLabel}>Release</Text>
+              <Text style={styles.statValue}>
+                {new Date(movie.release_date).getFullYear() || 'N/A'}
+              </Text>
+            </View>
+            
+            <View style={[styles.statCard, styles.statCardAccent]}>
+              <Feather name="star" size={16} color="#fff" />
+              <Text style={styles.statLabelWhite}>Rating</Text>
+              <Text style={styles.statValueWhite}>
+                {movie.vote_average?.toFixed(1) ?? 'NR'}
+              </Text>
+            </View>
+            
+            <View style={styles.statCard}>
+              <Feather name="clock" size={16} color={lightTheme.accent} />
+              <Text style={styles.statLabel}>Runtime</Text>
+              <Text style={styles.statValue}>
+                {movie.runtime ? `${movie.runtime}m` : 'N/A'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Genres */}
+          {movie.genres && movie.genres.length > 0 && (
+            <View style={styles.genresSection}>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.genresScroll}
+              >
+                {movie.genres.map(genre => (
+                  <View key={genre.id} style={styles.genrePill}>
+                    <Text style={styles.genreText}>{genre.name}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Overview */}
+          <View style={styles.overviewSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIndicator} />
+              <Text style={styles.sectionTitle}>Synopsis</Text>
+            </View>
+            <Text style={styles.overview}>{movie.overview}</Text>
+          </View>
+
+          {/* Action Button */}
+          <TouchableOpacity
+            style={[styles.actionButton, isFavourite && styles.actionButtonActive]}
+            onPress={handleFavouriteToggle}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={isFavourite 
+                ? [lightTheme.accent, lightTheme.accent] 
+                : ['transparent', 'transparent']}
+              style={styles.buttonGradient}
+            >
+              <Feather
+                name={isFavourite ? 'check-circle' : 'plus-circle'}
+                color={isFavourite ? '#fff' : lightTheme.accent}
+                size={20}
+              />
+              <Text style={[styles.actionButtonText, isFavourite && styles.actionButtonTextActive]}>
+                {isFavourite ? 'In Your Favourites' : 'Add to Favourites'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -134,90 +216,190 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: lightTheme.background
   },
+  heroContainer: {
+    width: '100%',
+    height: 500,
+    position: 'relative'
+  },
   poster: {
     width: '100%',
-    height: 420
+    height: '100%'
+  },
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 200
+  },
+  floatingFavButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    borderRadius: 50,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8
+  },
+  blurContainer: {
+    padding: 12,
+    borderRadius: 50
   },
   content: {
-    padding: 16
+    padding: 20,
+    paddingTop: 24
+  },
+  titleSection: {
+    marginBottom: 24
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: lightTheme.text
+    fontSize: 32,
+    fontWeight: '800',
+    color: lightTheme.text,
+    letterSpacing: -0.5,
+    marginBottom: 8
   },
   subtitle: {
     color: lightTheme.secondaryText,
-    marginTop: 4,
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 4
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    gap: 6
+  },
+  statCardAccent: {
+    backgroundColor: lightTheme.accent
+  },
+  statLabel: {
+    fontSize: 11,
+    color: lightTheme.secondaryText,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  statLabelWhite: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: lightTheme.text
+  },
+  statValueWhite: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff'
+  },
+  genresSection: {
+    marginBottom: 28
+  },
+  genresScroll: {
+    paddingRight: 20
+  },
+  genrePill: {
+    backgroundColor: `${lightTheme.accent}15`,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: `${lightTheme.accent}30`
+  },
+  genreText: {
+    color: lightTheme.accent,
+    fontSize: 13,
+    fontWeight: '600'
+  },
+  overviewSection: {
+    marginBottom: 32
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12
   },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16
-  },
-  metaText: {
-    color: lightTheme.secondaryText,
-    fontSize: 13
+  sectionIndicator: {
+    width: 4,
+    height: 20,
+    backgroundColor: lightTheme.accent,
+    borderRadius: 2,
+    marginRight: 8
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 12,
-    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: '700',
     color: lightTheme.text
   },
   overview: {
     fontSize: 15,
     color: lightTheme.secondaryText,
-    lineHeight: 22
+    lineHeight: 24,
+    letterSpacing: 0.2
   },
-  genres: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8
+  actionButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: lightTheme.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8
   },
-  genrePill: {
-    backgroundColor: `${lightTheme.accent}22`,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6
+  actionButtonActive: {
+    shadowOpacity: 0.3
   },
-  genreText: {
-    color: lightTheme.accent,
-    fontSize: 12
-  },
-  favButton: {
-    marginTop: 20,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: lightTheme.accent,
-    paddingVertical: 14,
+  buttonGradient: {
+    paddingVertical: 16,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8
+    gap: 10,
+    borderWidth: 2,
+    borderColor: lightTheme.accent,
+    borderRadius: 16
   },
-  favButtonActive: {
-    backgroundColor: lightTheme.accent,
-    borderColor: lightTheme.accent
-  },
-  favButtonText: {
+  actionButtonText: {
     color: lightTheme.accent,
-    fontSize: 15,
-    fontWeight: '600'
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3
   },
-  favButtonTextActive: {
+  actionButtonTextActive: {
     color: '#fff'
   },
   loader: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: lightTheme.background
+    backgroundColor: lightTheme.background,
+    gap: 16
+  },
+  loadingText: {
+    color: lightTheme.secondaryText,
+    fontSize: 14
   },
   errorText: {
     color: '#ef4444',
-    fontSize: 16
+    fontSize: 16,
+    marginTop: 12,
+    fontWeight: '600'
   }
 });
